@@ -1,8 +1,15 @@
 import { Component } from '@angular/core';
 import { ReferenciasMaterialModule } from '../../../shared/modulos/referencias-material.module';
 import { FormsModule } from '@angular/forms';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import {
+  ColumnMode,
+  NgxDatatableModule,
+  SelectionType,
+} from '@swimlane/ngx-datatable';
 import { Seleccion } from '../../../core/entidades/Seleccion';
+import { SeleccionService } from '../../servicios/seleccion.service';
+import { MatDialog } from '@angular/material/dialog';
+import { SeleccionEditarComponent } from '../seleccion-editar/seleccion-editar.component';
 
 @Component({
   selector: 'app-seleccion',
@@ -24,9 +31,83 @@ export class SeleccionComponent {
       prop: 'entidad',
     },
   ];
+  public modoColumna = ColumnMode;
+  public tipoSeleccion = SelectionType;
+  public seleccionEscogida: Seleccion | undefined;
+  constructor(
+    private servicio: SeleccionService,
+    private servicioDialogo: MatDialog
+  ) {
+    this.listar();
+  }
 
+  escoger(event: any) {
+    if (event.type == 'click') {
+      this.seleccionEscogida = event.row;
+    }
+  }
+  listar() {
+    this.servicio.listar().subscribe({
+      next: (response) => {
+        this.selecciones = response;
+      },
+      error: (error) => {
+        window.alert(error);
+      },
+    });
+  }
   buscar() {}
-  agregar() {}
-  modificar() {}
+  agregar() {
+    const dialogo = this.servicioDialogo.open(SeleccionEditarComponent, {
+      width: '400px',
+      height: '300px',
+      data: {
+        seleccion: {
+          id: 0,
+          nombre: '',
+          entidad: '',
+        },
+        encabezado: 'Agregando Seleccion de Futbol',
+      },
+      disableClose: true,
+    });
+
+    dialogo.afterClosed().subscribe({
+      next: (datos) => {
+        if (datos) {
+          this.servicio.agregar(datos.seleccion).subscribe({
+            next: (response) => {
+              this.servicio.buscar(datos.seleccion.nombre).subscribe({
+                next: (response) => {
+                  this.selecciones = response;
+                },
+                error: (error) => {
+                  window.alert(error.message);
+                },
+              });
+            },
+            error: (error) => {
+              window.alert(error.message);
+            },
+          });
+        }
+      },
+    });
+  }
+  modificar() {
+    if (this.seleccionEscogida) {
+      const dialogo = this.servicioDialogo.open(SeleccionEditarComponent, {
+        width: '400px',
+        height: '300px',
+        data: {
+          seleccion: this.seleccionEscogida,
+          encabezado: `Editando la Seleccion de Futbol ${this.seleccionEscogida.nombre}`,
+        },
+        disableClose: true,
+      });
+    } else {
+      window.alert('Debe escoger una seleccion para la operacion');
+    }
+  }
   verificarEliminar() {}
 }

@@ -17,6 +17,17 @@
   <button mat-raised-button color="warn" (click)="verificarEliminar()">
     Verificar
   </button>
-  <ngx-datatable class="dark" [rows]="selecciones" [columns]="columnas">
+  <ngx-datatable
+    class="dark"
+    [rows]="selecciones"
+    [columns]="columnas"
+    [rowHeight]="'auto'"
+    [columnMode]="modoColumna.force"
+    [limit]="10"
+    [selectionType]="tipoSeleccion.single"
+    [headerHeight]="50"
+    [footerHeight]="50"
+    (activate)="escoger($event)"
+  >
   </ngx-datatable>
 </div>
